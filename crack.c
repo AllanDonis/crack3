@@ -11,6 +11,8 @@
 #define PASS_LEN 50     // Maximum length any password will be.
 #define HASH_LEN 33     // Length of hash plus one for null.
 
+int strcomp(const void *a,const void *b);
+
 
 int main(int argc, char *argv[])
 {
@@ -22,7 +24,7 @@ int main(int argc, char *argv[])
 
     // TODO: Read the hashes file into an array.
     char line[HASH_LEN + 1];
-    int hashesFound = 0;
+    int numberofhash = 0;
 
     FILE *file1 = fopen(argv[1],"r");
 
@@ -41,15 +43,21 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //   Use either a 2D array or an array of arrays.
+    //   Use the loadFile function from fileutil.c
+    //   Uncomment the appropriate statement.
+    int size;
+    //char (*hashes)[HASH_LEN] = loadFile(argv[1], &size);
+    char **hashes = loadFileAA(argv[1], &size);
+
     while(fgets(line,sizeof(line),file1) != NULL){
 
         //Trim newline.
 		char *nl = strchr(line,'\n');
         if(nl) *nl = '\0';
 
-
         // reallocating the memory
-        if (hashesFound >= capacity){
+        if (numberofhash >= capacity){
             capacity *= 2;
             char **temp = (char **) realloc (array, capacity * sizeof(char *));
             if (temp == NULL){
@@ -60,37 +68,33 @@ int main(int argc, char *argv[])
             array = temp;
         }
 
-         // meomyry for each string
-        array[hashesFound] = (char *)malloc((strlen(line) + 1) * sizeof(char));
-
+       // memory for each string
+        array[numberofhash] = (char *)malloc((strlen(line) + 1) * sizeof(char));
+        if (array[numberofhash] == NULL){
+            printf("memory failed");
+            free(array[numberofhash]);
+            exit(1);
+        }
         //copying the line into the array
-        strcpy(array[hashesFound],line);
+        char *str = strcpy(array[numberofhash],line);
 
-        hashesFound++;
-
+        numberofhash++;
     }
-
-    for (int i = 0; i < hashesFound; i++) {
-        printf("Hash %d: %s\n", i + 1, array[i]);
-        free(array[i]);
-    }  
-
-    //   Use either a 2D array or an array of arrays.
-    //   Use the loadFile function from fileutil.c
-    //   Uncomment the appropriate statement.
-    int size;
-    //char (*hashes)[HASH_LEN] = loadFile(argv[1], &size);
-    //char **hashes = loadFile(argv[1], &size);
     
     // CHALLENGE1: Sort the hashes using qsort.
+    qsort(array,size,sizeof(char**),strcomp);
 
-    //qsort(array,size,sizeof(char **),strcmp);
+    /*//for testig porposes printing the array after sorting 
+    for (int i = 0; i < numberofhash; i++) {
+        printf("Hash %d: %s\n", i + 1, array[i]);
+        free(array[i]);
+    }*/
 
     // TODO
     // Open the password file for reading.
     FILE *file2 = fopen(argv[2],"r");
 
-    if (file1 == NULL){
+    if (file2 == NULL){
         printf("no able to read file %s\n", argv[2]);
         exit(1);
     }
@@ -100,16 +104,50 @@ int main(int argc, char *argv[])
     // function from fileutil.h to find the hash.
     // If you find it, display the password and the hash.
     // Keep track of how many hashes were found.
-    // CHALLENGE1: Use binary search instead of linear search.
-    
+    // CHALLENGE1: Use binary search instead of linear search. 
 
+    //password variable
+    char passW[PASS_LEN];
+    int hashesfound = 0;
+
+    while(fgets(passW,PASS_LEN,file2)){
+
+        //trimming the new line character
+        char *nl = strchr(passW,'\n');
+        if(nl) *nl = '\0';
+
+        // Hash the password.
+        char *hash = md5(passW, strlen(passW));
+
+        //array search
+        char *found = substringSearchAA(passW, hashes, size);
+
+        if(found){
+            hashesfound++;
+            printf("Hashes Found %d: %s\n",hashesfound , found);
+        }
+
+    }
+    
     // TODO
     // When done with the file:
     //   Close the file
     fclose(file1);
     fclose(file2);
+
     //   Display the number of hashes found.
-    //printf("%d Haseshes found",hashesFound);
+
     //   Free up memory.
     free(array);
+    free(array[numberofhash]);
+}
+
+// string compare function
+int strcomp(const void *a,const void *b){
+
+    char **aa = (char **)a;
+    char **bb = (char **)b;
+
+    return strcmp(*aa, *bb);
+    
 }
