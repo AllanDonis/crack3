@@ -12,6 +12,8 @@
 #define HASH_LEN 33     // Length of hash plus one for null.
 
 int strcomp(const void *a,const void *b);
+int strsearch(const void * target, const void * elemt);
+int intsearch(const void * target, const void * elemt);
 
 
 int main(int argc, char *argv[])
@@ -84,12 +86,6 @@ int main(int argc, char *argv[])
     // CHALLENGE1: Sort the hashes using qsort.
     qsort(array,size,sizeof(char**),strcomp);
 
-    /*//for testig porposes printing the array after sorting 
-    for (int i = 0; i < numberofhash; i++) {
-        printf("Hash %d: %s\n", i + 1, array[i]);
-        free(array[i]);
-    }*/
-
     // TODO
     // Open the password file for reading.
     FILE *file2 = fopen(argv[2],"r");
@@ -107,8 +103,9 @@ int main(int argc, char *argv[])
     // CHALLENGE1: Use binary search instead of linear search. 
 
     //password variable
-    char passW[PASS_LEN];
+    //char passW[PASS_LEN];
     int hashesfound = 0;
+    char passW[PASS_LEN];
 
     while(fgets(passW,PASS_LEN,file2)){
 
@@ -119,12 +116,12 @@ int main(int argc, char *argv[])
         // Hash the password.
         char *hash = md5(passW, strlen(passW));
 
-        //array search
+        //linear array search
         char *found = substringSearchAA(passW, hashes, size);
 
         if(found){
             hashesfound++;
-            printf("Hashes Found %d: %s\n",hashesfound , found);
+            printf("Hashes Found %d: %s\n",hashesfound,hash);
         }
 
     }
@@ -136,7 +133,7 @@ int main(int argc, char *argv[])
     fclose(file2);
 
     //   Display the number of hashes found.
-
+    printf("Hashes Found: %d\n", hashesfound );
     //   Free up memory.
     free(array);
     free(array[numberofhash]);
@@ -148,6 +145,5 @@ int strcomp(const void *a,const void *b){
     char **aa = (char **)a;
     char **bb = (char **)b;
 
-    return strcmp(*aa, *bb);
-    
+    return strcmp(*aa, *bb);  
 }
